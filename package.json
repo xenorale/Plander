@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Уютное настольное приложение для продуктивности все в одном",
   "author": "xenorale",
+  "license": "MIT",
   "main": "electron/main.js",
   "type": "commonjs",
   "scripts": {

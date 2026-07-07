@@ -1,12 +1,14 @@
 const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage } = require('electron')
 const path = require('path')
+const Store = require('electron-store')
 
 const isDev = process.env.NODE_ENV === 'development'
 const iconPath = path.join(__dirname, '..', 'assets', 'icon.png')
 
+const store = new Store({ name: 'plander-data' })
+
 let mainWindow = null
 let tray = null
-let data = {}
 
 function startedHidden() {
   if (process.argv.includes('--hidden')) return true
@@ -88,13 +90,13 @@ function buildTray() {
   tray.on('double-click', showWindow)
 }
 
-ipcMain.handle('store:get', (_e, key) => data[key])
+ipcMain.handle('store:get', (_e, key) => store.get(key))
 ipcMain.handle('store:set', (_e, key, value) => {
-  data[key] = value
+  store.set(key, value)
   return true
 })
 ipcMain.handle('store:delete', (_e, key) => {
-  delete data[key]
+  store.delete(key)
   return true
 })
 
@@ -126,6 +128,29 @@ ipcMain.handle('app:quit', () => {
   app.quit()
 })
 
+function checkReminders() {
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  const todayStr = today.toISOString().slice(0, 10)
+
+  const tasks = store.get('tasks') || []
+  const dueToday = tasks.filter((t) => t && !t.done && t.due === todayStr)
+  if (dueToday.length === 1) {
+    new Notification({ title: 'Задача на сегодня', body: dueToday[0].text }).show()
+  } else if (dueToday.length > 1) {
+    new Notification({ title: 'Задачи на сегодня', body: `Сегодня запланировано дел: ${dueToday.length}` }).show()
+  }
+
+  const subs = store.get('subscriptions') || []
+  subs.forEach((s) => {
+    if (!s || !s.nextDate) return
+    const diff = (new Date(s.nextDate) - today) / 86400000
+    if (diff >= 0 && diff <= 3) {
+      new Notification({ title: 'Скоро спишется подписка', body: `${s.name}, ${s.price} рублей` }).show()
+    }
+  })
+}
+
 const gotLock = app.requestSingleInstanceLock()
 
 if (!gotLock) {
@@ -137,6 +162,7 @@ if (!gotLock) {
     if (process.platform === 'win32') app.setAppUserModelId('com.xenorale.plander')
     createWindow()
     buildTray()
+    setTimeout(checkReminders, 2500)
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

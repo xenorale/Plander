@@ -3,16 +3,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        cream: '#faf3e7',
-        sand: '#f0e6d2',
-        blush: '#f6c6d0',
-        rose: '#e8a7b4',
-        mint: '#bfe3d0',
-        sage: '#9fceb6',
-        lavender: '#d7cdf0',
-        grape: '#b3a4e0',
-        cocoa: '#6b5b4b',
-        ink: '#4a4038'
+        paper: '#efe7d8',
+        cream: '#f4eee1',
+        sand: '#e4d9c2',
+        ink: '#2f2a24',
+        cocoa: '#5a5045',
+        pine: '#41725f',
+        clay: '#bd6b47',
+        amber: '#cf9a48',
+        slate: '#5f7480',
+        olive: '#7d8a4f',
+        denim: '#4f6d84'
       },
       fontFamily: {
         hand: ['"Patrick Hand"', 'Comic Sans MS', 'cursive'],
@@ -23,8 +24,8 @@ module.exports = {
         blob: '30px 22px 28px 24px'
       },
       boxShadow: {
-        sketch: '3px 3px 0 rgba(107, 91, 75, 0.22)',
-        sketchsm: '2px 2px 0 rgba(107, 91, 75, 0.18)'
+        sketch: '3px 3px 0 rgba(90, 80, 69, 0.22)',
+        sketchsm: '2px 2px 0 rgba(90, 80, 69, 0.18)'
       }
     }
   },

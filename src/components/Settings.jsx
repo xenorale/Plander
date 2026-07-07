@@ -14,17 +14,15 @@ export default function Settings() {
     setAutostart(next)
     if (window.api && window.api.setAutostart) window.api.setAutostart(next).then(setAutostart)
   }
-
   function testNotify() {
     notify('Привет из Plander', 'Уведомления работают, все супер')
   }
-
   function quit() {
     if (window.api && window.api.quit) window.api.quit()
   }
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-4">
+    <div className="mx-auto flex max-w-md flex-col gap-4">
       <h2 className="font-script text-3xl text-cocoa">Настройки</h2>
 
       <div className="card flex items-center justify-between p-4">
@@ -37,7 +35,7 @@ export default function Settings() {
         </div>
         <button
           onClick={toggleAutostart}
-          className={'relative h-8 w-14 rounded-full border-2 border-cocoa/50 transition-colors ' + (autostart ? 'bg-sage' : 'bg-white')}
+          className={'relative h-8 w-14 shrink-0 rounded-full border-2 border-cocoa/50 transition-colors ' + (autostart ? 'bg-pine' : 'bg-white')}
         >
           <span className={'absolute top-0.5 h-6 w-6 rounded-full bg-cocoa/70 transition-all ' + (autostart ? 'left-6' : 'left-0.5')} />
         </button>
@@ -51,12 +49,12 @@ export default function Settings() {
             <p className="text-sm text-cocoa/60">отправить тестовый пуш в систему</p>
           </div>
         </div>
-        <button onClick={testNotify} className="btn bg-lavender">
+        <button onClick={testNotify} className="btn bg-slate/25">
           Тест
         </button>
       </div>
 
-      <button onClick={quit} className="btn mt-4 self-start bg-blush">
+      <button onClick={quit} className="btn mt-2 self-start bg-clay/25">
         <LogOut size={18} /> Выйти из приложения
       </button>
     </div>

@@ -21,13 +21,13 @@ function startedHidden() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1060,
-    height: 710,
-    minWidth: 920,
-    minHeight: 640,
+    width: 460,
+    height: 880,
+    minWidth: 400,
+    minHeight: 720,
     frame: false,
     show: false,
-    backgroundColor: '#faf3e7',
+    backgroundColor: '#efe7d8',
     icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

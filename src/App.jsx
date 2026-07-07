@@ -1,28 +1,40 @@
 import { useEffect, useState } from 'react'
 import TitleBar from './components/TitleBar.jsx'
-import Sidebar from './components/Sidebar.jsx'
+import BottomNav from './components/BottomNav.jsx'
 import Pomodoro from './components/Pomodoro.jsx'
+import Reports from './components/Reports.jsx'
 import Todo from './components/Todo.jsx'
 import Calendar from './components/Calendar.jsx'
 import Subscriptions from './components/Subscriptions.jsx'
 import Settings from './components/Settings.jsx'
 import { loadData, saveData } from './lib/storage.js'
-import { defaultTasks, defaultCategories } from './data/defaults.js'
+import { defaultTasks, defaultCategories, defaultEvents } from './data/defaults.js'
 
 export default function App() {
   const [view, setView] = useState('pomodoro')
   const [tasks, setTasks] = useState([])
   const [categories, setCategories] = useState([])
+  const [events, setEvents] = useState([])
+  const [focusLog, setFocusLog] = useState([])
+  const [label, setLabel] = useState('')
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
     let alive = true
     ;(async () => {
-      const t = await loadData('tasks', defaultTasks)
-      const c = await loadData('categories', defaultCategories)
+      const [t, c, e, f, l] = await Promise.all([
+        loadData('tasks', defaultTasks),
+        loadData('categories', defaultCategories),
+        loadData('events', defaultEvents),
+        loadData('focusLog', []),
+        loadData('focusLabel', '')
+      ])
       if (!alive) return
       setTasks(t)
       setCategories(c)
+      setEvents(e)
+      setFocusLog(f)
+      setLabel(l)
       setReady(true)
     })()
     return () => {
@@ -33,10 +45,18 @@ export default function App() {
   useEffect(() => {
     if (ready) saveData('tasks', tasks)
   }, [tasks, ready])
-
   useEffect(() => {
     if (ready) saveData('categories', categories)
   }, [categories, ready])
+  useEffect(() => {
+    if (ready) saveData('events', events)
+  }, [events, ready])
+  useEffect(() => {
+    if (ready) saveData('focusLog', focusLog)
+  }, [focusLog, ready])
+  useEffect(() => {
+    if (ready) saveData('focusLabel', label)
+  }, [label, ready])
 
   useEffect(() => {
     if (!window.api || !window.api.onNavigate) return
@@ -44,20 +64,19 @@ export default function App() {
   }, [])
 
   const views = {
-    pomodoro: <Pomodoro />,
+    pomodoro: <Pomodoro focusLog={focusLog} setFocusLog={setFocusLog} label={label} setLabel={setLabel} />,
+    reports: <Reports focusLog={focusLog} />,
     tasks: <Todo tasks={tasks} setTasks={setTasks} categories={categories} setCategories={setCategories} />,
-    calendar: <Calendar tasks={tasks} />,
+    calendar: <Calendar tasks={tasks} setTasks={setTasks} events={events} setEvents={setEvents} categories={categories} />,
     subs: <Subscriptions />,
     settings: <Settings />
   }
 
   return (
     <div className="flex h-full flex-col">
-      <TitleBar />
-      <div className="flex min-h-0 flex-1">
-        <Sidebar view={view} onSelect={setView} />
-        <main className="min-h-0 flex-1 overflow-y-auto px-8 py-6">{ready ? views[view] : null}</main>
-      </div>
+      <TitleBar onSettings={() => setView('settings')} />
+      <main className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{ready ? views[view] : null}</main>
+      <BottomNav view={view} onSelect={setView} />
     </div>
   )
 }

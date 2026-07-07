@@ -1,32 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, Trash2, CreditCard } from 'lucide-react'
-import { loadData, saveData } from '../lib/storage.js'
-import { defaultSubscriptions } from '../data/defaults.js'
 import { formatDay } from '../lib/date.js'
 
 function uid() {
   return Math.random().toString(36).slice(2, 9)
 }
 
-export default function Subscriptions() {
-  const [subs, setSubs] = useState([])
-  const [ready, setReady] = useState(false)
+export default function Subscriptions({ subs, setSubs }) {
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [period, setPeriod] = useState('monthly')
   const [nextDate, setNextDate] = useState('')
-
-  useEffect(() => {
-    ;(async () => {
-      const s = await loadData('subscriptions', defaultSubscriptions)
-      setSubs(s)
-      setReady(true)
-    })()
-  }, [])
-
-  useEffect(() => {
-    if (ready) saveData('subscriptions', subs)
-  }, [subs, ready])
 
   function add() {
     const value = parseFloat(price)

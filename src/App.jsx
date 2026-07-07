@@ -8,7 +8,7 @@ import Calendar from './components/Calendar.jsx'
 import Subscriptions from './components/Subscriptions.jsx'
 import Settings from './components/Settings.jsx'
 import { loadData, saveData } from './lib/storage.js'
-import { defaultTasks, defaultCategories, defaultEvents } from './data/defaults.js'
+import { defaultTasks, defaultCategories, defaultEvents, defaultSubscriptions } from './data/defaults.js'
 
 export default function App() {
   const [view, setView] = useState('pomodoro')
@@ -17,17 +17,19 @@ export default function App() {
   const [events, setEvents] = useState([])
   const [focusLog, setFocusLog] = useState([])
   const [label, setLabel] = useState('')
+  const [subs, setSubs] = useState([])
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
     let alive = true
     ;(async () => {
-      const [t, c, e, f, l] = await Promise.all([
+      const [t, c, e, f, l, s] = await Promise.all([
         loadData('tasks', defaultTasks),
         loadData('categories', defaultCategories),
         loadData('events', defaultEvents),
         loadData('focusLog', []),
-        loadData('focusLabel', '')
+        loadData('focusLabel', ''),
+        loadData('subscriptions', defaultSubscriptions)
       ])
       if (!alive) return
       setTasks(t)
@@ -35,6 +37,7 @@ export default function App() {
       setEvents(e)
       setFocusLog(f)
       setLabel(l)
+      setSubs(s)
       setReady(true)
     })()
     return () => {
@@ -57,6 +60,9 @@ export default function App() {
   useEffect(() => {
     if (ready) saveData('focusLabel', label)
   }, [label, ready])
+  useEffect(() => {
+    if (ready) saveData('subscriptions', subs)
+  }, [subs, ready])
 
   useEffect(() => {
     if (!window.api || !window.api.onNavigate) return
@@ -67,8 +73,8 @@ export default function App() {
     pomodoro: <Pomodoro focusLog={focusLog} setFocusLog={setFocusLog} label={label} setLabel={setLabel} />,
     reports: <Reports focusLog={focusLog} />,
     tasks: <Todo tasks={tasks} setTasks={setTasks} categories={categories} setCategories={setCategories} />,
-    calendar: <Calendar tasks={tasks} setTasks={setTasks} events={events} setEvents={setEvents} categories={categories} />,
-    subs: <Subscriptions />,
+    calendar: <Calendar tasks={tasks} setTasks={setTasks} events={events} setEvents={setEvents} subs={subs} categories={categories} />,
+    subs: <Subscriptions subs={subs} setSubs={setSubs} />,
     settings: <Settings />
   }
 

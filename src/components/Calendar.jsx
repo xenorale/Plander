@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Check, Trash2, MapPin, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Check, Trash2, MapPin, X, CreditCard } from 'lucide-react'
 import { dateKey, formatDay } from '../lib/date.js'
 
 const MONTHS = [
@@ -18,7 +18,7 @@ function byTime(a, b) {
   return (a.time || '99:99') > (b.time || '99:99') ? 1 : -1
 }
 
-export default function Calendar({ tasks, setTasks, events, setEvents, categories }) {
+export default function Calendar({ tasks, setTasks, events, setEvents, subs, categories }) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
@@ -41,6 +41,12 @@ export default function Calendar({ tasks, setTasks, events, setEvents, categorie
   })
   const eventByDay = {}
   events.forEach((e) => e.dates.forEach((k) => { if (!eventByDay[k]) eventByDay[k] = e }))
+  const subByDay = {}
+  subs.forEach((s) => {
+    if (!s.nextDate) return
+    if (!subByDay[s.nextDate]) subByDay[s.nextDate] = []
+    subByDay[s.nextDate].push(s)
+  })
 
   function move(step) {
     let m = month + step
@@ -96,6 +102,7 @@ export default function Calendar({ tasks, setTasks, events, setEvents, categorie
 
   const dayTasks = tasks.filter((t) => t.due === selected).slice().sort(byTime)
   const dayEvents = events.filter((e) => e.dates.includes(selected))
+  const daySubs = subs.filter((s) => s.nextDate === selected)
   const isToday = (d) => d === now.getDate() && month === now.getMonth() && year === now.getFullYear()
 
   return (
@@ -143,11 +150,18 @@ export default function Calendar({ tasks, setTasks, events, setEvents, categorie
               >
                 <span className="text-ink">{d}</span>
                 {count > 0 && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-clay" />}
+                {subByDay[key] && <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-amber" />}
                 {ev && <span className={'absolute bottom-1 h-1.5 w-6 rounded-full ' + (TONE_BG[ev.color] || 'bg-denim')} />}
               </button>
             )
           })}
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-cocoa/60">
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-clay" /> задачи</span>
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber" /> подписки</span>
+        <span className="flex items-center gap-1"><span className="h-2 w-3 rounded-full bg-denim" /> события</span>
       </div>
 
       {multi ? (
@@ -190,6 +204,14 @@ export default function Calendar({ tasks, setTasks, events, setEvents, categorie
             </div>
           ))}
 
+          {daySubs.map((s) => (
+            <div key={s.id} className="flex items-center gap-2 rounded-xl border-2 border-cocoa/20 bg-amber/15 px-3 py-2">
+              <CreditCard size={16} className="text-cocoa/60" />
+              <span className="flex-1 text-ink">{s.name}</span>
+              <span className="text-sm text-cocoa/70">спишут {s.price} ₽</span>
+            </div>
+          ))}
+
           {dayTasks.map((t) => (
             <div key={t.id} className="flex items-center gap-3 rounded-xl border-2 border-cocoa/20 bg-white/60 px-3 py-2">
               <button
@@ -203,7 +225,9 @@ export default function Calendar({ tasks, setTasks, events, setEvents, categorie
             </div>
           ))}
 
-          {dayTasks.length === 0 && dayEvents.length === 0 && <p className="text-cocoa/50">на этот день ничего нет</p>}
+          {dayTasks.length === 0 && dayEvents.length === 0 && daySubs.length === 0 && (
+            <p className="text-cocoa/50">на этот день ничего нет</p>
+          )}
 
           <div className="flex gap-2">
             <input

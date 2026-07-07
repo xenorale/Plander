@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Patrick Hand', 'Comic Sans MS', cursive;
+    color: #4a4038;
+    background-color: #faf3e7;
+    background-image: radial-gradient(rgba(107, 91, 75, 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  input,
+  select {
+    font-family: inherit;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(107, 91, 75, 0.3);
+    border-radius: 999px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply border-2 border-cocoa/50 bg-white/70 shadow-sketch;
+    border-radius: 22px 26px 20px 24px;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 border-2 border-cocoa/60 bg-cream px-4 py-2 text-ink shadow-sketchsm transition-all;
+    border-radius: 14px 18px 12px 16px;
+  }
+  .btn:hover {
+    transform: translate(-1px, -1px);
+  }
+  .btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
+
+  .chip {
+    @apply border-2 border-cocoa/40 px-3 py-1 text-sm text-ink;
+    border-radius: 12px 16px 10px 14px;
+  }
+
+  .drag {
+    -webkit-app-region: drag;
+  }
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+}

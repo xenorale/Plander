@@ -9,6 +9,7 @@ const store = new Store({ name: 'plander-data' })
 
 let mainWindow = null
 let tray = null
+let trayNotified = false
 
 function startedHidden() {
   if (process.argv.includes('--hidden')) return true
@@ -49,7 +50,7 @@ function createWindow() {
   mainWindow.on('close', (e) => {
     if (!app.isQuitting) {
       e.preventDefault()
-      mainWindow.hide()
+      hideToTray()
     }
   })
 }
@@ -59,6 +60,21 @@ function showWindow() {
   if (mainWindow.isMinimized()) mainWindow.restore()
   mainWindow.show()
   mainWindow.focus()
+}
+
+function hideToTray() {
+  if (!mainWindow) return
+  mainWindow.hide()
+  if (!trayNotified && tray) {
+    trayNotified = true
+    try {
+      tray.displayBalloon({
+        icon: iconPath,
+        title: 'Plander свернулся в трей',
+        content: 'Открыть можно кликом по иконке внизу справа. Если её не видно, нажми на стрелку вверх'
+      })
+    } catch (e) {}
+  }
 }
 
 function buildTray() {
@@ -87,6 +103,7 @@ function buildTray() {
 
   tray.setToolTip('Plander')
   tray.setContextMenu(menu)
+  tray.on('click', showWindow)
   tray.on('double-click', showWindow)
 }
 
@@ -120,9 +137,7 @@ ipcMain.handle('autostart:set', (_e, enabled) => {
 ipcMain.handle('win:minimize', () => {
   if (mainWindow) mainWindow.minimize()
 })
-ipcMain.handle('win:hide', () => {
-  if (mainWindow) mainWindow.hide()
-})
+ipcMain.handle('win:hide', () => hideToTray())
 ipcMain.handle('app:quit', () => {
   app.isQuitting = true
   app.quit()

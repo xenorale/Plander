@@ -30,5 +30,33 @@
     "tailwindcss": "^3.4.13",
     "vite": "^5.4.8",
     "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.xenorale.plander",
+    "productName": "Plander",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Plander"
+    }
   }
 }

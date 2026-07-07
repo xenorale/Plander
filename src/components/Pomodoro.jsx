@@ -1,36 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Play, Pause, SkipForward, RotateCcw } from 'lucide-react'
-import Stats from './Stats.jsx'
-import { loadData, saveData, notify } from '../lib/storage.js'
+import { notify } from '../lib/storage.js'
+import { todayKey, localKey, formatDuration } from '../lib/date.js'
 
 const DURATIONS = { work: 25 * 60, short: 5 * 60, long: 15 * 60 }
 const LABELS = { work: 'Фокус', short: 'Перерыв', long: 'Долгий перерыв' }
-
-function todayKey() {
-  const d = new Date()
-  d.setHours(12, 0, 0, 0)
-  return d.toISOString().slice(0, 10)
-}
 
 function pad(n) {
   return String(n).padStart(2, '0')
 }
 
-export default function Pomodoro() {
+export default function Pomodoro({ focusLog, setFocusLog, label, setLabel }) {
   const [mode, setMode] = useState('work')
   const [left, setLeft] = useState(DURATIONS.work)
   const [running, setRunning] = useState(false)
   const [cycles, setCycles] = useState(0)
-  const [stats, setStats] = useState({})
-  const ready = useRef(false)
-
-  useEffect(() => {
-    ;(async () => {
-      const s = await loadData('pomodoroStats', {})
-      setStats(s)
-      ready.current = true
-    })()
-  }, [])
 
   useEffect(() => {
     if (!running) return
@@ -42,18 +26,15 @@ export default function Pomodoro() {
     if (left > 0) return
     setRunning(false)
     if (mode === 'work') {
-      const key = todayKey()
-      setStats((prev) => {
-        const updated = { ...prev, [key]: (prev[key] || 0) + 1 }
-        saveData('pomodoroStats', updated)
-        return updated
-      })
+      const name = (label || '').trim() || 'Без задачи'
+      const entry = { id: Math.random().toString(36).slice(2, 9), label: name, minutes: DURATIONS.work / 60, ts: Date.now() }
+      setFocusLog((prev) => [...prev, entry])
       const done = cycles + 1
       setCycles(done)
-      notify('Помидорка готова 🍅', 'Отдохни немного, ты молодец')
+      notify('Помидорка готова', `Записал ${entry.minutes} минут на «${name}». Можно передохнуть`)
       change(done % 4 === 0 ? 'long' : 'short')
     } else {
-      notify('Перерыв закончился', 'Погнали работать')
+      notify('Перерыв закончился', 'Погнали дальше')
       change('work')
     }
   }, [left])
@@ -62,43 +43,51 @@ export default function Pomodoro() {
     setMode(next)
     setLeft(DURATIONS[next])
   }
-
   function pick(next) {
     setRunning(false)
     change(next)
   }
-
   function skip() {
     setRunning(false)
     change(mode === 'work' ? 'short' : 'work')
   }
 
-  const total = DURATIONS[mode]
-  const radius = 130
+  const radius = 120
   const circ = 2 * Math.PI * radius
-  const offset = circ * (left / total)
-  const ring = mode === 'work' ? '#e8a7b4' : mode === 'short' ? '#9fceb6' : '#b3a4e0'
+  const offset = circ * (left / DURATIONS[mode])
+  const ring = mode === 'work' ? '#41725f' : mode === 'short' ? '#cf9a48' : '#5f7480'
+
+  const name = (label || '').trim() || 'Без задачи'
+  const todayMin = focusLog.filter((e) => localKey(e.ts) === todayKey()).reduce((s, e) => s + e.minutes, 0)
+  const curMin = focusLog.filter((e) => e.label === name).reduce((s, e) => s + e.minutes, 0)
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center gap-7">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-5">
+      <input
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        placeholder="над чем фокусируемся?"
+        className="w-full rounded-2xl border-2 border-cocoa/30 bg-white/70 px-4 py-3 text-center text-lg outline-none focus:border-pine"
+      />
+
+      <div className="flex items-center gap-2">
         {['work', 'short', 'long'].map((m) => (
-          <button key={m} onClick={() => pick(m)} className={'chip ' + (mode === m ? 'bg-lavender' : 'bg-white/60')}>
+          <button key={m} onClick={() => pick(m)} className={'chip ' + (mode === m ? 'border-pine bg-pine/20' : 'bg-white/60')}>
             {LABELS[m]}
           </button>
         ))}
       </div>
 
       <div className="relative grid place-items-center">
-        <svg width="300" height="300" className="-rotate-90">
-          <circle cx="150" cy="150" r={radius} fill="none" stroke="rgba(107,91,75,0.14)" strokeWidth="16" />
+        <svg width="270" height="270" className="-rotate-90">
+          <circle cx="135" cy="135" r={radius} fill="none" stroke="rgba(90,80,69,0.15)" strokeWidth="15" />
           <circle
-            cx="150"
-            cy="150"
+            cx="135"
+            cy="135"
             r={radius}
             fill="none"
             stroke={ring}
-            strokeWidth="16"
+            strokeWidth="15"
             strokeLinecap="round"
             strokeDasharray={circ}
             strokeDashoffset={offset}
@@ -106,18 +95,18 @@ export default function Pomodoro() {
           />
         </svg>
         <div className="absolute flex flex-col items-center">
-          <span className="font-script text-7xl font-bold text-ink">
+          <span className="font-script text-6xl font-bold text-ink">
             {pad(Math.floor(left / 60))}:{pad(left % 60)}
           </span>
           <span className="text-cocoa/70">{LABELS[mode]}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <button onClick={() => pick(mode)} className="btn">
           <RotateCcw size={20} />
         </button>
-        <button onClick={() => setRunning((r) => !r)} className="btn bg-blush px-8 text-lg">
+        <button onClick={() => setRunning((r) => !r)} className="btn bg-pine px-8 text-lg text-cream">
           {running ? <Pause size={22} /> : <Play size={22} />}
           {running ? 'Пауза' : 'Старт'}
         </button>
@@ -126,17 +115,22 @@ export default function Pomodoro() {
         </button>
       </div>
 
-      <div className="flex items-center gap-2 text-cocoa/70">
+      <div className="flex items-center gap-2">
         {[0, 1, 2, 3].map((i) => (
-          <span
-            key={i}
-            className={'h-3 w-3 rounded-full border-2 border-cocoa/40 ' + (i < cycles % 4 ? 'bg-rose' : 'bg-transparent')}
-          />
+          <span key={i} className={'h-3 w-3 rounded-full border-2 border-cocoa/40 ' + (i < cycles % 4 ? 'bg-pine' : 'bg-transparent')} />
         ))}
-        <span className="ml-2 text-sm">закрыто сегодня: {stats[todayKey()] || 0}</span>
       </div>
 
-      <Stats data={stats} />
+      <div className="card grid w-full grid-cols-2 gap-3 p-4 text-center">
+        <div>
+          <p className="text-sm text-cocoa/60">сегодня в фокусе</p>
+          <p className="font-script text-3xl font-bold text-ink">{formatDuration(todayMin)}</p>
+        </div>
+        <div>
+          <p className="truncate text-sm text-cocoa/60">на «{name}»</p>
+          <p className="font-script text-3xl font-bold text-ink">{formatDuration(curMin)}</p>
+        </div>
+      </div>
     </div>
   )
 }

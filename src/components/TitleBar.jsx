@@ -14,10 +14,7 @@ export default function TitleBar({ onSettings }) {
         >
           <Settings size={14} />
         </button>
-        <button
-          onClick={min}
-          className="grid h-7 w-7 place-items-center rounded-full border-2 border-cocoa/40 bg-cream hover:bg-sand"
-        >
+        <button onClick={min} className="grid h-7 w-7 place-items-center rounded-full border-2 border-cocoa/40 bg-cream hover:bg-sand">
           <Minus size={15} />
         </button>
         <button

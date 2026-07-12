@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Check, Trash2, MapPin, X, CreditCard } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Check, Trash2, MapPin, X, CreditCard, Pencil } from 'lucide-react'
 import { dateKey, formatDay } from '../lib/date.js'
+import { toneClass } from '../lib/categories.js'
+import { toggleTask as computeToggledTasks } from '../lib/tasks.js'
 
-const MONTHS = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-]
+const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 const WD = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
 const EVENT_TONES = ['denim', 'olive', 'clay', 'slate', 'amber', 'pine']
 const TONE_BG = { denim: 'bg-denim', olive: 'bg-olive', clay: 'bg-clay', slate: 'bg-slate', amber: 'bg-amber', pine: 'bg-pine' }
@@ -28,6 +27,10 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
   const [tripName, setTripName] = useState('')
   const [taskText, setTaskText] = useState('')
   const [taskTime, setTaskTime] = useState('')
+  const [taskCat, setTaskCat] = useState(categories[0] ? categories[0].id : null)
+  const [editingEventId, setEditingEventId] = useState(null)
+
+  const effectiveTaskCat = categories.some((c) => c.id === taskCat) ? taskCat : categories[0] ? categories[0].id : null
 
   const startOffset = (new Date(year, month, 1).getDay() + 6) % 7
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -40,7 +43,11 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
     if (t.due && !t.done) dueByDay[t.due] = (dueByDay[t.due] || 0) + 1
   })
   const eventByDay = {}
-  events.forEach((e) => e.dates.forEach((k) => { if (!eventByDay[k]) eventByDay[k] = e }))
+  events.forEach((e) =>
+    e.dates.forEach((k) => {
+      if (!eventByDay[k]) eventByDay[k] = e
+    })
+  )
   const subByDay = {}
   subs.forEach((s) => {
     if (!s.nextDate) return
@@ -73,16 +80,28 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
 
   function saveTrip() {
     if (!tripName.trim() || picked.length === 0) return
-    const color = EVENT_TONES[events.length % EVENT_TONES.length]
-    setEvents([...events, { id: uid(), title: tripName.trim(), dates: [...picked].sort(), color }])
+    if (editingEventId) {
+      setEvents(events.map((e) => (e.id === editingEventId ? { ...e, title: tripName.trim(), dates: [...picked].sort() } : e)))
+    } else {
+      const color = EVENT_TONES[events.length % EVENT_TONES.length]
+      setEvents([...events, { id: uid(), title: tripName.trim(), dates: [...picked].sort(), color }])
+    }
     setTripName('')
     setPicked([])
     setMulti(false)
+    setEditingEventId(null)
   }
   function cancelTrip() {
     setPicked([])
     setTripName('')
     setMulti(false)
+    setEditingEventId(null)
+  }
+  function editEvent(e) {
+    setEditingEventId(e.id)
+    setTripName(e.title)
+    setPicked([...e.dates])
+    setMulti(true)
   }
   function removeEvent(id) {
     setEvents(events.filter((e) => e.id !== id))
@@ -90,17 +109,22 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
 
   function addTaskToDay() {
     const value = taskText.trim()
-    const cat = categories[0] ? categories[0].id : null
-    if (!value || !cat) return
-    setTasks([...tasks, { id: uid(), categoryId: cat, text: value, done: false, due: selected, time: taskTime || null }])
+    if (!value || !effectiveTaskCat) return
+    setTasks([...tasks, { id: uid(), categoryId: effectiveTaskCat, text: value, done: false, due: selected, time: taskTime || null }])
     setTaskText('')
     setTaskTime('')
   }
   function toggleTask(id) {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+    setTasks(computeToggledTasks(tasks, id))
   }
 
-  const dayTasks = tasks.filter((t) => t.due === selected).slice().sort(byTime)
+  const catById = {}
+  categories.forEach((c) => (catById[c.id] = c))
+
+  const dayTasks = tasks
+    .filter((t) => t.due === selected)
+    .slice()
+    .sort(byTime)
   const dayEvents = events.filter((e) => e.dates.includes(selected))
   const daySubs = subs.filter((s) => s.nextDate === selected)
   const isToday = (d) => d === now.getDate() && month === now.getMonth() && year === now.getFullYear()
@@ -142,10 +166,10 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
                   (picked2
                     ? 'border-pine bg-pine/25'
                     : sel
-                    ? 'border-pine bg-pine/10'
-                    : isToday(d)
-                    ? 'border-cocoa/50 bg-cream'
-                    : 'border-cocoa/15 bg-white/50')
+                      ? 'border-pine bg-pine/10'
+                      : isToday(d)
+                        ? 'border-cocoa/50 bg-cream'
+                        : 'border-cocoa/15 bg-white/50')
                 }
               >
                 <span className="text-ink">{d}</span>
@@ -159,14 +183,22 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-cocoa/60">
-        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-clay" /> задачи</span>
-        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber" /> подписки</span>
-        <span className="flex items-center gap-1"><span className="h-2 w-3 rounded-full bg-denim" /> события</span>
+        <span className="flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-clay" /> задачи
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-amber" /> подписки
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="h-2 w-3 rounded-full bg-denim" /> события
+        </span>
       </div>
 
       {multi ? (
         <div className="card flex flex-col gap-2 p-4">
-          <p className="text-sm text-cocoa/70">тыкай дни в календаре, выбрано: {picked.length}</p>
+          <p className="text-sm text-cocoa/70">
+            {editingEventId ? 'редактируем событие, ' : ''}тыкай дни в календаре, выбрано: {picked.length}
+          </p>
           <div className="flex gap-2">
             <input
               value={tripName}
@@ -198,6 +230,9 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
               <span className={'h-3 w-3 rounded-full ' + (TONE_BG[e.color] || 'bg-denim')} />
               <span className="flex-1 text-ink">{e.title}</span>
               <span className="text-xs text-cocoa/50">{e.dates.length} дн</span>
+              <button onClick={() => editEvent(e)} className="text-cocoa/40 hover:text-pine">
+                <Pencil size={15} />
+              </button>
               <button onClick={() => removeEvent(e.id)} className="text-cocoa/40 hover:text-clay">
                 <Trash2 size={16} />
               </button>
@@ -216,12 +251,20 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
             <div key={t.id} className="flex items-center gap-3 rounded-xl border-2 border-cocoa/20 bg-white/60 px-3 py-2">
               <button
                 onClick={() => toggleTask(t.id)}
-                className={'grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 border-cocoa/50 ' + (t.done ? 'bg-pine' : 'bg-white')}
+                className={
+                  'grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 border-cocoa/50 ' + (t.done ? 'bg-pine' : 'bg-white')
+                }
               >
                 {t.done && <Check size={15} className="text-cream" />}
               </button>
               {t.time && <span className="chip bg-amber/25 text-xs">{t.time}</span>}
               <span className={'flex-1 ' + (t.done ? 'text-cocoa/40 line-through' : 'text-ink')}>{t.text}</span>
+              {catById[t.categoryId] && (
+                <span
+                  className={'h-2.5 w-2.5 shrink-0 rounded-full ' + toneClass(catById[t.categoryId].color)}
+                  title={catById[t.categoryId].name}
+                />
+              )}
             </div>
           ))}
 
@@ -229,14 +272,27 @@ export default function Calendar({ tasks, setTasks, events, setEvents, subs, cat
             <p className="text-cocoa/50">на этот день ничего нет</p>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               value={taskText}
               onChange={(e) => setTaskText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addTaskToDay()}
               placeholder="добавить дело"
-              className="flex-1 rounded-xl border-2 border-cocoa/30 bg-white/80 px-3 py-2 outline-none focus:border-pine"
+              className="min-w-[9rem] flex-1 rounded-xl border-2 border-cocoa/30 bg-white/80 px-3 py-2 outline-none focus:border-pine"
             />
+            {categories.length > 0 && (
+              <select
+                value={effectiveTaskCat || ''}
+                onChange={(e) => setTaskCat(e.target.value)}
+                className="rounded-xl border-2 border-cocoa/30 bg-white/80 px-2 py-2 text-cocoa/80 outline-none"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <input
               type="time"
               value={taskTime}

@@ -9,6 +9,8 @@ import Subscriptions from './components/Subscriptions.jsx'
 import Settings from './components/Settings.jsx'
 import { loadData, saveData } from './lib/storage.js'
 import { defaultTasks, defaultCategories, defaultEvents, defaultSubscriptions } from './data/defaults.js'
+import { todayKey } from './lib/date.js'
+import { rollForwardAll } from './lib/subscriptions.js'
 
 export default function App() {
   const [view, setView] = useState('pomodoro')
@@ -37,13 +39,24 @@ export default function App() {
       setEvents(e)
       setFocusLog(f)
       setLabel(l)
-      setSubs(s)
+      setSubs(rollForwardAll(s, todayKey()))
       setReady(true)
     })()
     return () => {
       alive = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!ready) return
+    const id = setInterval(
+      () => {
+        setSubs((prev) => rollForwardAll(prev, todayKey()))
+      },
+      60 * 60 * 1000
+    )
+    return () => clearInterval(id)
+  }, [ready])
 
   useEffect(() => {
     if (ready) saveData('tasks', tasks)
@@ -70,7 +83,7 @@ export default function App() {
   }, [])
 
   const views = {
-    pomodoro: <Pomodoro focusLog={focusLog} setFocusLog={setFocusLog} label={label} setLabel={setLabel} />,
+    pomodoro: <Pomodoro focusLog={focusLog} setFocusLog={setFocusLog} label={label} setLabel={setLabel} tasks={tasks} />,
     reports: <Reports focusLog={focusLog} />,
     tasks: <Todo tasks={tasks} setTasks={setTasks} categories={categories} setCategories={setCategories} />,
     calendar: <Calendar tasks={tasks} setTasks={setTasks} events={events} setEvents={setEvents} subs={subs} categories={categories} />,

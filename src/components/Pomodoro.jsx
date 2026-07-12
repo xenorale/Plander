@@ -10,11 +10,24 @@ function pad(n) {
   return String(n).padStart(2, '0')
 }
 
-export default function Pomodoro({ focusLog, setFocusLog, label, setLabel }) {
+export default function Pomodoro({ focusLog, setFocusLog, label, setLabel, tasks = [] }) {
   const [mode, setMode] = useState('work')
   const [left, setLeft] = useState(DURATIONS.work)
   const [running, setRunning] = useState(false)
   const [cycles, setCycles] = useState(0)
+  const [taskId, setTaskId] = useState('')
+
+  const openTasks = tasks.filter((t) => !t.done)
+
+  function pickTask(id) {
+    setTaskId(id)
+    const t = tasks.find((x) => x.id === id)
+    if (t) setLabel(t.text)
+  }
+  function changeLabel(value) {
+    setLabel(value)
+    setTaskId('')
+  }
 
   useEffect(() => {
     if (!running) return
@@ -27,7 +40,13 @@ export default function Pomodoro({ focusLog, setFocusLog, label, setLabel }) {
     setRunning(false)
     if (mode === 'work') {
       const name = (label || '').trim() || 'Без задачи'
-      const entry = { id: Math.random().toString(36).slice(2, 9), label: name, minutes: DURATIONS.work / 60, ts: Date.now() }
+      const entry = {
+        id: Math.random().toString(36).slice(2, 9),
+        label: name,
+        taskId: taskId || null,
+        minutes: DURATIONS.work / 60,
+        ts: Date.now()
+      }
       setFocusLog((prev) => [...prev, entry])
       const done = cycles + 1
       setCycles(done)
@@ -37,6 +56,7 @@ export default function Pomodoro({ focusLog, setFocusLog, label, setLabel }) {
       notify('Перерыв закончился', 'Погнали дальше')
       change('work')
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [left])
 
   function change(next) {
@@ -65,10 +85,25 @@ export default function Pomodoro({ focusLog, setFocusLog, label, setLabel }) {
     <div className="mx-auto flex max-w-md flex-col items-center gap-5">
       <input
         value={label}
-        onChange={(e) => setLabel(e.target.value)}
+        onChange={(e) => changeLabel(e.target.value)}
         placeholder="над чем фокусируемся?"
         className="w-full rounded-2xl border-2 border-cocoa/30 bg-white/70 px-4 py-3 text-center text-lg outline-none focus:border-pine"
       />
+
+      {openTasks.length > 0 && (
+        <select
+          value={taskId}
+          onChange={(e) => pickTask(e.target.value)}
+          className="w-full rounded-2xl border-2 border-cocoa/30 bg-white/70 px-4 py-2 text-center outline-none focus:border-pine"
+        >
+          <option value="">или выбери задачу из списка</option>
+          {openTasks.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.text}
+            </option>
+          ))}
+        </select>
+      )}
 
       <div className="flex items-center gap-2">
         {['work', 'short', 'long'].map((m) => (

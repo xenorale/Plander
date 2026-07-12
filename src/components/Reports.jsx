@@ -27,15 +27,19 @@ export default function Reports({ focusLog }) {
   focusLog.forEach((e) => {
     byLabel[e.label] = (byLabel[e.label] || 0) + e.minutes
   })
-  const labels = Object.entries(byLabel).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  const labels = Object.entries(byLabel)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
   const labelMax = labels.reduce((m, x) => Math.max(m, x[1]), 0) || 1
 
   const buckets = BUCKETS.map((b) => ({
     name: b.name,
-    mins: focusLog.filter((e) => {
-      const h = new Date(e.ts).getHours()
-      return h >= b.from && h < b.to
-    }).reduce((s, e) => s + e.minutes, 0)
+    mins: focusLog
+      .filter((e) => {
+        const h = new Date(e.ts).getHours()
+        return h >= b.from && h < b.to
+      })
+      .reduce((s, e) => s + e.minutes, 0)
   }))
   const bucketMax = buckets.reduce((m, x) => Math.max(m, x.mins), 0) || 1
 
@@ -65,9 +69,7 @@ export default function Reports({ focusLog }) {
       </div>
 
       {empty && (
-        <p className="card p-8 text-center text-cocoa/50">
-          пока пусто. запусти помодоро на какую нибудь задачу и тут появятся графики
-        </p>
+        <p className="card p-8 text-center text-cocoa/50">пока пусто. запусти помодоро на какую нибудь задачу и тут появятся графики</p>
       )}
 
       {!empty && (
@@ -94,7 +96,10 @@ export default function Reports({ focusLog }) {
             {buckets.map((b) => (
               <div key={b.name} className="flex flex-1 flex-col items-center justify-end gap-1">
                 <span className="text-xs text-cocoa/60">{b.mins ? formatDuration(b.mins) : ''}</span>
-                <div className="w-full rounded-t-lg border-2 border-cocoa/20 bg-clay/70" style={{ height: `${(b.mins / bucketMax) * 88 + 4}%` }} />
+                <div
+                  className="w-full rounded-t-lg border-2 border-cocoa/20 bg-clay/70"
+                  style={{ height: `${(b.mins / bucketMax) * 88 + 4}%` }}
+                />
                 <span className="text-xs text-cocoa/70">{b.name}</span>
               </div>
             ))}
@@ -108,7 +113,10 @@ export default function Reports({ focusLog }) {
           <div className="flex items-end justify-between gap-2" style={{ height: '120px' }}>
             {byDay.map((d) => (
               <div key={d.key} className="flex flex-1 flex-col items-center justify-end gap-1">
-                <div className="w-full rounded-t-lg border-2 border-cocoa/20 bg-slate/70" style={{ height: `${(d.mins / dayMax) * 86 + 4}%` }} />
+                <div
+                  className="w-full rounded-t-lg border-2 border-cocoa/20 bg-slate/70"
+                  style={{ height: `${(d.mins / dayMax) * 86 + 4}%` }}
+                />
                 <span className="text-xs text-cocoa/70">{weekdayName(d.key)}</span>
               </div>
             ))}

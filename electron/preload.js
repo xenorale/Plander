@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('api', {
   minimize: () => ipcRenderer.invoke('win:minimize'),
   hide: () => ipcRenderer.invoke('win:hide'),
   quit: () => ipcRenderer.invoke('app:quit'),
+  exportData: () => ipcRenderer.invoke('data:export'),
+  importData: () => ipcRenderer.invoke('data:import'),
   onNavigate: (cb) => {
     const handler = (_e, view) => cb(view)
     ipcRenderer.on('navigate', handler)

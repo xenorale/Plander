@@ -12,24 +12,39 @@
     "dev:electron": "wait-on tcp:127.0.0.1:5173 && cross-env NODE_ENV=development electron .",
     "build": "vite build",
     "start": "electron .",
-    "dist": "vite build && electron-builder"
+    "dist": "vite build && electron-builder",
+    "release": "vite build && electron-builder --publish always",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "test": "vitest run"
   },
   "dependencies": {
-    "electron-store": "^8.2.0"
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.0.1",
     "cross-env": "^7.0.3",
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
     "lucide-react": "^0.451.0",
     "postcss": "^8.4.47",
+    "prettier": "^3.9.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.13",
     "vite": "^5.4.8",
+    "vitest": "^4.1.10",
     "wait-on": "^8.0.1"
   },
   "build": {
@@ -47,7 +62,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "assets/icon.ico"
@@ -58,6 +75,11 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "shortcutName": "Plander"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "xenorale",
+      "repo": "Plander"
     }
   }
 }

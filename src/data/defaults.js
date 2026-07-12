@@ -19,9 +19,7 @@ export const defaultTasks = [
   { id: 'l1', categoryId: 'life', text: 'Забрать посылку с почты', done: false, due: shift(1), time: '12:30' }
 ]
 
-export const defaultEvents = [
-  { id: 'ev1', title: 'Поездка в Питер', dates: [shift(5), shift(6), shift(7), shift(8)], color: 'denim' }
-]
+export const defaultEvents = [{ id: 'ev1', title: 'Поездка в Питер', dates: [shift(5), shift(6), shift(7), shift(8)], color: 'denim' }]
 
 export const defaultSubscriptions = [
   { id: 'sub1', name: 'Spotify', price: 199, period: 'monthly', nextDate: shift(9) },

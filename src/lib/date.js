@@ -27,6 +27,16 @@ export function weekdayName(key) {
   return WEEKDAYS[new Date(y, m - 1, d).getDay()]
 }
 
+export function advanceByRepeat(key, repeat) {
+  const [y, m, d] = key.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  if (repeat === 'daily') date.setDate(date.getDate() + 1)
+  else if (repeat === 'weekly') date.setDate(date.getDate() + 7)
+  else if (repeat === 'monthly') date.setMonth(date.getMonth() + 1)
+  else return key
+  return localKey(date)
+}
+
 export function formatDuration(mins) {
   const m = Math.round(mins)
   if (m < 60) return `${m} мин`
